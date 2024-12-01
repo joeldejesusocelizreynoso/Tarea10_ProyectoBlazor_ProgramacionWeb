@@ -1,0 +1,68 @@
+﻿@page "/colorin"
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<div>
+    <table>
+        @for (int i = 0; i < 5; i++)
+        {
+            <tr>
+                @for (int j = 0; j < 5; j++)
+                {
+                    <td>
+                        <input type="text" @bind="inputs[i, j]" @oninput="UpdateCounts" />
+                    </td>
+                }
+            </tr>
+        }
+    </table>
+    <div>
+        Cantidad de Rojos: @countRed
+        Cantidad de Verdes: @countGreen
+        Cantidad de Azules: @countBlue
+    </div>
+    <button @onclick="SaveData">Guardar</button>
+</div>
+
+@code {
+    private string[,] inputs = new string[5, 5];
+    private int countRed = 0, countGreen = 0, countBlue = 0;
+
+    // Actualizar los contadores de colores
+    private void UpdateCounts()
+    {
+        countRed = countGreen = countBlue = 0;
+        foreach (var value in inputs)
+        {
+            switch (value?.ToLower())
+            {
+                case "rojo": countRed++; break;
+                case "verde": countGreen++; break;
+                case "azul": countBlue++; break;
+            }
+        }
+    }
+
+    // Guardar datos en localStorage
+    private async Task SaveData()
+    {
+        await JSRuntime.InvokeVoidAsync("saveToLocalStorage", "colorinData", inputs);
+    }
+
+    // Cargar datos desde localStorage
+    private async Task LoadData()
+    {
+        var data = await JSRuntime.InvokeAsync<string[,]>("loadFromLocalStorage", "colorinData");
+        if (data != null)
+        {
+            inputs = data;
+            UpdateCounts();
+        }
+    }
+
+    // Cargar datos al inicializar la página
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+}
